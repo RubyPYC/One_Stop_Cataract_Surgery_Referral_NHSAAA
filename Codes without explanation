@@ -1,0 +1,139 @@
+import pandas as pd
+import re
+import numpy as np
+import seaborn as sns
+from matplotlib import pyplot as plt
+
+
+
+
+oscsr = './OSCSR_NEW.csv'
+data_all = pd.read_csv(oscsr)
+data_all.info()
+
+
+
+
+waiting_time = data_all.loc[data_all['Waiting_Time'] != 0 ,'Waiting_Time']
+print(('Average waiting time from referral to surgery:'), (round(waiting_time.mean(), 1)),'months')
+
+
+
+
+app_ref = data_all['Appropriate'].sum()*100/data_all['Appropriate'].count()
+inapp_ref = round((100-app_ref), 2)
+
+print(('Proportion of approprate referrals:'), app_ref, '%')
+print(('Proportion of inapproprate referrals:'), inapp_ref, '%')
+
+total = len(data_all)
+plt.figure(figsize = (15,11))
+pie_ref = np.array([app_ref,inapp_ref])
+plt.pie(pie_ref, colors = sns.color_palette('Set2'), autopct= lambda p:'{:.1f}%\n({:.0f})'.format(p, total*p/100), startangle = 30,  wedgeprops={'linewidth': 2.0, 'edgecolor': 'white'}, textprops={'fontsize':20})
+plt.legend(labels = ['Appropriate','Inappropriate'], loc="center left", bbox_to_anchor=(-0.3,0.5), fancybox=True, framealpha=1, shadow=True, borderpad=2, fontsize=14)
+
+fig1 = plt.gcf()
+plt.show()
+plt.draw()
+#fig1.savefig('app_ref.jpg', dpi=300)
+
+
+
+
+data_inapp = data_all.loc[data_all['Appropriate'] == 0, :]
+data_inapp = data_inapp.drop(columns=['Waiting_Time','Appropriate'])
+data_inapp = data_inapp[data_inapp.columns[data_inapp.sum()>0]]
+
+inapp_reason = data_inapp.columns.values.tolist()
+inapp_number = len(data_inapp)
+inapp_list = list()
+inapp_list_percent = list()
+
+for i in range(1,len(inapp_reason)):
+    a = data_inapp.iloc[:,i].sum()
+    percent = str(round(((a/inapp_number)*100),1))+'%'
+    print('The perentage of the reason is:', inapp_reason[i], 'and accounts for', percent, '%', '(', a, 'cases)')
+    inapp_list.append(a)
+    inapp_list_percent.append(percent)
+
+del inapp_reason[0]
+plt.figure(figsize =(12,8))
+bars_inapp = plt.bar(inapp_reason, inapp_list, color=sns.color_palette('Set2'), width = 0.5)
+plt.xlabel('Reasons', size=16, labelpad=16)
+plt.ylabel('Numbers of Patients', size=16, labelpad=16)
+plt.xticks(rotation=0)
+
+plt.rcParams['font.size'] = '16'
+j=0
+for bar in bars_inapp:
+    yval = bar.get_height()
+    plt.text(bar.get_x()+0.18,
+             yval+0.1,
+             inapp_list_percent[j],
+             size=12)
+    j+=1
+    
+fig2 = plt.gcf()
+plt.show()
+plt.draw()
+#fig2.savefig('inapp_reason.jpg', dpi=300)
+
+
+
+
+data_app = data_all.loc[data_all['Appropriate'] == 1, :]
+data_app = data_app.drop(columns=['Waiting_Time','Appropriate'])
+
+app_reason = data_app.columns.values.tolist()
+app_number = len(data_app)
+app_list = list()
+app_list_percent = list()
+
+for i in range(1,len(app_reason)):
+    a = data_app.iloc[:,i].sum()
+    percent = str(round(((a/app_number)*100),1))+'%'
+    print('The perentage of the reason is:', app_reason[i], 'and accounts for', percent, '%', '(', a, 'cases)')
+    app_list.append(a)
+    app_list_percent.append(percent)
+
+del app_reason[0]
+plt.figure(figsize =(20,6))
+bars_app = plt.bar(app_reason, app_list, color=sns.color_palette('Set3'), width = 0.6)
+plt.xlabel('Reasons', size=16, labelpad=16)
+plt.ylabel('Numbers of Patients', size=16, labelpad=16)
+plt.xticks(rotation=65)
+
+plt.rcParams['font.size'] = '16'
+j=0
+for bar in bars_app:
+    yval = bar.get_height()
+    plt.text(bar.get_x()+0.12, yval+0.2, app_list_percent[j], size=14)
+    j+=1
+
+fig3 = plt.gcf()
+plt.show()
+plt.draw()
+#fig3.savefig('app_reason.jpg', dpi=300)
+
+
+
+
+data_app_new = data_app.iloc[:,[1,2,3,4,5,6,7,8,9]]
+data_app_new
+reason_percent = data_app_new.loc[(data_app_new.sum(axis=1) != 0), :]
+number_of_facotrs = reason_percent.to_numpy().sum()
+
+print('Total number of patients with factors increasing the complexityof the surgery is', len(reason_percent))
+print('Total number of factors is:',number_of_facotrs)
+
+total_app = len(data_app)
+plt.figure(figsize = (15,25))
+pie_app = np.array(app_list)
+
+plt.pie(pie_app, colors = sns.color_palette('Set3'), autopct= lambda p:'{:.1f}%\n({:,.0f})'.format(p, number_of_facotrs*p/100), startangle = 30,  wedgeprops={'linewidth': 2.0, 'edgecolor': 'white'}, textprops={'fontsize':14})
+plt.legend(labels = app_reason, loc="center left", bbox_to_anchor=(-0.3,0.5), fancybox=True, framealpha=1, shadow=True, borderpad=2, fontsize=14)
+
+fig1 = plt.gcf()
+plt.show()
+plt.draw()
+#fig1.savefig('app_ref.jpg', dpi=300)
